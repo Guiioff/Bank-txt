@@ -1,0 +1,36 @@
+package br.com.devgui.banktxtapi.model;
+
+import br.com.devgui.banktxtapi.model.enums.TipoTransacao;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+@Entity
+@Table(name = "transacoes")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Transacao {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private LocalDate data;
+
+    @Column(nullable = false)
+    private BigDecimal valor;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private TipoTransacao tipo;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id", nullable = false)
+    private Usuario usuario;
+}
