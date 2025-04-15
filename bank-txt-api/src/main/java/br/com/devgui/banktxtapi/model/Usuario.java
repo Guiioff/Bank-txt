@@ -27,16 +27,12 @@ public class Usuario {
     @Column(nullable = false, length = 255)
     private String senha;
 
-    @Column(nullable = false)
-    private BigDecimal saldo;
-
     public Usuario() {}
 
     public Usuario(String nome, String email, String senha) {
         this.nome = nome;
         this.email = email;
         this.senha = senha;
-        this.saldo = BigDecimal.ZERO;
     }
 
     @Override
@@ -46,7 +42,6 @@ public class Usuario {
         sb.append(", nome='").append(nome).append('\'');
         sb.append(", email='").append(email).append('\'');
         sb.append(", senha='").append(senha).append('\'');
-        sb.append(", saldo=").append(saldo);
         sb.append('}');
         return sb.toString();
     }
