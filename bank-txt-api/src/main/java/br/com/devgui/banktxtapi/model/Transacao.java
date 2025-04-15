@@ -34,10 +34,24 @@ public class Transacao {
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
 
+    public Transacao() {}
+
     public Transacao(LocalDate data, BigDecimal valor, TipoTransacao tipo, Usuario usuario) {
         this.data = data;
         this.valor = valor;
         this.tipo = tipo;
         this.usuario = usuario;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("Transacao{");
+        sb.append("id=").append(id);
+        sb.append(", data=").append(data);
+        sb.append(", valor=").append(valor);
+        sb.append(", tipo=").append(tipo);
+        sb.append(", usuario=").append(usuario);
+        sb.append('}');
+        return sb.toString();
     }
 }

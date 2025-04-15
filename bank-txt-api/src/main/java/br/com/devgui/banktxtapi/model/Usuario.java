@@ -30,10 +30,24 @@ public class Usuario {
     @Column(nullable = false)
     private BigDecimal saldo;
 
+    public Usuario() {}
+
     public Usuario(String nome, String email, String senha) {
         this.nome = nome;
         this.email = email;
         this.senha = senha;
         this.saldo = BigDecimal.ZERO;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("Usuario{");
+        sb.append("id=").append(id);
+        sb.append(", nome='").append(nome).append('\'');
+        sb.append(", email='").append(email).append('\'');
+        sb.append(", senha='").append(senha).append('\'');
+        sb.append(", saldo=").append(saldo);
+        sb.append('}');
+        return sb.toString();
     }
 }
