@@ -18,6 +18,6 @@ public class TransacaoController {
     @PostMapping("/upload")
     @ResponseStatus(HttpStatus.CREATED)
     public void upload(@RequestParam("arquivo") MultipartFile arquivo, @RequestParam("usuarioId") Long usuarioId) {
-        transacaoService.processarArquivo(arquivo, usuarioId);
+        transacaoService.processarTransacoes(arquivo, usuarioId);
     }
 }
