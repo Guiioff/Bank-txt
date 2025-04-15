@@ -7,6 +7,7 @@ import br.com.devgui.banktxtapi.repository.TransacaoRepository;
 import br.com.devgui.banktxtapi.repository.UsuarioRepository;
 import br.com.devgui.banktxtapi.service.TransacaoService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
@@ -63,6 +64,7 @@ public class TransacaoServiceImpl implements TransacaoService {
     }
 
     @Override
+    @Transactional
     public void salvarTransacoes(List<Transacao> transacoes) {
 
         List<Transacao> transacoesValidas = new ArrayList<>();
