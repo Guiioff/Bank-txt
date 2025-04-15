@@ -30,6 +30,7 @@ public class TransacaoServiceImpl implements TransacaoService {
     }
 
     @Override
+    @Transactional
     public void processarTransacoes(MultipartFile arquivo, Long usuarioId) {
         Optional<Usuario> usuarioOptional = usuarioRepository.findById(usuarioId);
 
@@ -64,7 +65,6 @@ public class TransacaoServiceImpl implements TransacaoService {
     }
 
     @Override
-    @Transactional
     public void salvarTransacoes(List<Transacao> transacoes) {
 
         List<Transacao> transacoesValidas = new ArrayList<>();
