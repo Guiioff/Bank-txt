@@ -33,4 +33,11 @@ public class Transacao {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
+
+    public Transacao(LocalDate data, BigDecimal valor, TipoTransacao tipo, Usuario usuario) {
+        this.data = data;
+        this.valor = valor;
+        this.tipo = tipo;
+        this.usuario = usuario;
+    }
 }
