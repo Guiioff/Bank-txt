@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface TransacaoService {
 
-    void processarArquivo(MultipartFile arquivo, Long usuarioId);
+    List<Transacao> processarArquivo(MultipartFile arquivo, Long usuarioId);
 }
