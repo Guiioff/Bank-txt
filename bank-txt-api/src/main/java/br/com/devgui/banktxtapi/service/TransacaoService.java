@@ -12,5 +12,5 @@ public interface TransacaoService {
 
     List<Transacao> lerArquivo(MultipartFile arquivo, Usuario usuario);
 
-    void salvarTransacoes(List<Transacao> transacoes, Usuario usuario);
+    void salvarTransacoes(List<Transacao> transacoes);
 }

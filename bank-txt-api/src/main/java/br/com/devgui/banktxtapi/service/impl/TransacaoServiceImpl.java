@@ -29,14 +29,19 @@ public class TransacaoServiceImpl implements TransacaoService {
     }
 
     @Override
-    public List<Transacao> processarArquivo(MultipartFile arquivo, Long usuarioId) {
+    public void processarTransacoes(MultipartFile arquivo, Long usuarioId) {
+        Optional<Usuario> usuarioOptional = usuarioRepository.findById(usuarioId);
 
-        Optional<Usuario> usuario = usuarioRepository.findById(usuarioId);
+        if (usuarioOptional.isEmpty()) throw new RuntimeException("Usuário não encontrado");
 
-        if (usuario.isEmpty()) throw new RuntimeException("Usuário não encontrado");
+        Usuario usuario = usuarioOptional.get();
+        List<Transacao> transacaos = this.lerArquivo(arquivo, usuario);
+        this.salvarTransacoes(transacaos);
+    }
 
+    @Override
+    public List<Transacao> lerArquivo(MultipartFile arquivo, Usuario usuario) {
         List<Transacao> transacoes = new ArrayList<>();
-
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(arquivo.getInputStream()));
             String linha;
@@ -48,13 +53,35 @@ public class TransacaoServiceImpl implements TransacaoService {
                 TipoTransacao tipo = TipoTransacao.valueOf(partes[1]);
                 BigDecimal valor = new BigDecimal(partes[2]);
 
-                transacoes.add(new Transacao(data, valor, tipo, usuario.get()));
+                transacoes.add(new Transacao(data, valor, tipo, usuario));
             }
-
             return transacoes;
 
         } catch (Exception e) {
             throw new RuntimeException("Erro ao processar o arquivo", e);
         }
+    }
+
+    @Override
+    public void salvarTransacoes(List<Transacao> transacoes) {
+
+        List<Transacao> transacoesValidas = new ArrayList<>();
+
+        for (Transacao transacao : transacoes) {
+            if (transacao == null) {
+                throw new IllegalArgumentException("Transação nula encontrada.");
+            }
+
+            if (transacao.getValor() == null || transacao.getValor().compareTo(BigDecimal.ZERO) == 0 ) {
+                throw new IllegalArgumentException("Valor da transação não pode ser nulo/zero.");
+            }
+
+            if (transacao.getData() == null) {
+                throw new IllegalArgumentException("Data da transação não pode ser nula.");
+            }
+
+            transacoesValidas.add(transacao);
+        }
+        this.transacaoRepository.saveAll(transacoesValidas);
     }
 }
