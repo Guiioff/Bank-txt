@@ -1,6 +1,7 @@
 package br.com.devgui.banktxtapi.controller;
 
 import br.com.devgui.banktxtapi.controller.request.UsuarioCadastroRequestDTO;
+import br.com.devgui.banktxtapi.controller.response.UsuarioTransacoesResponseDTO;
 import br.com.devgui.banktxtapi.model.Usuario;
 import br.com.devgui.banktxtapi.service.UsuarioService;
 import jakarta.validation.Valid;
@@ -22,5 +23,11 @@ public class UsuarioController {
     public void cadastrarUsuario(@RequestBody @Valid UsuarioCadastroRequestDTO usuarioDto) {
         Usuario usuario = usuarioDto.toEntity();
         usuarioService.cadastrarUsuario(usuario);
+    }
+
+    @GetMapping("/{id}/transacoes")
+    @ResponseStatus(HttpStatus.OK)
+    public UsuarioTransacoesResponseDTO buscarTransacoes(@PathVariable Long id){
+        return usuarioService.listarTransacoes(id);
     }
 }
