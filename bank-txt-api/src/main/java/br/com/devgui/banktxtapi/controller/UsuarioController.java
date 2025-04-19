@@ -8,6 +8,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+
 @RestController
 @RequestMapping("/usuarios")
 public class UsuarioController {
@@ -29,5 +31,13 @@ public class UsuarioController {
     @ResponseStatus(HttpStatus.OK)
     public UsuarioTransacoesResponseDTO buscarTransacoes(@PathVariable Long id){
         return usuarioService.listarTransacoes(id);
+    }
+
+    @GetMapping("/{id}/transacoes/por-data")
+    @ResponseStatus(HttpStatus.OK)
+    public UsuarioTransacoesResponseDTO buscarTransacoesPorData(@PathVariable Long id,
+                                                                @RequestParam("inicio") LocalDate dataInicial,
+                                                                @RequestParam("fim") LocalDate dataFinal){
+        return usuarioService.listarTransacoesEntreDatas(id, dataInicial, dataFinal);
     }
 }
