@@ -74,63 +74,81 @@ public class UsuarioServiceImpl implements UsuarioService {
         Usuario usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com o ID: " + idUsuario));
 
-        List<Transacao> transacaos = transacaoRepository.findByUsuarioId(usuario.getId());
+        List<Transacao> transacoes = transacaoRepository.findByUsuarioId(usuario.getId());
 
-        LocalDate dataInicio = null;
-        LocalDate dataFim = null;
+        Map<String, LocalDate> periodo = obterPeriodoTransacoes(idUsuario, transacoes);
 
-        if (!transacaos.isEmpty()) {
-            Transacao primeiraTransacao = transacaoRepository.buscarPrimeiraTransacao(idUsuario).get();
-            Transacao ultimaTransacao = transacaoRepository.buscarUltimaTransacao(idUsuario).get();
+        int totalTransacoes = transacoes.size();
+        Map<TipoTransacao, Integer> quantidadePorTipo = inicializarMapaDeQuantidade();
+        Map<TipoTransacao, BigDecimal> valoresPorTipo = inicializarMapaDeValores();
 
-            dataInicio = primeiraTransacao.getData();
-            dataFim = ultimaTransacao.getData();
-        }
+        BigDecimal saldoAtual = calcularResumo(transacoes, quantidadePorTipo, valoresPorTipo);
 
+        BigDecimal mediaPorTransacao = totalTransacoes > 0
+                ? saldoAtual.divide(BigDecimal.valueOf(totalTransacoes), 2, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+
+        return new UsuarioResumoResponseDTO(
+                usuario.getId(),
+                usuario.getNome(),
+                periodo,
+                totalTransacoes,
+                quantidadePorTipo,
+                valoresPorTipo,
+                saldoAtual,
+                mediaPorTransacao,
+                periodo.get("fim")
+        );
+    }
+
+
+    private Map<String, LocalDate> obterPeriodoTransacoes(Long idUsuario, List<Transacao> transacaos) {
         Map<String, LocalDate> periodo = new HashMap<>();
-        periodo.put("inicio", dataInicio);
-        periodo.put("fim", dataInicio);
 
-        int totalTransacoes = transacaos.size();
-        Map<TipoTransacao, Integer> quantidadePorTipo = new EnumMap<>(TipoTransacao.class);
-        Map<TipoTransacao, BigDecimal> valoresPorTipo = new EnumMap<>(TipoTransacao.class);
-        BigDecimal saldoAtual = BigDecimal.ZERO;
+        if (transacaos.isEmpty()) {
+            periodo.put("inicio", null);
+            periodo.put("fim", null);
+        } else {
+            LocalDate dataInicio = transacaoRepository.buscarPrimeiraTransacao(idUsuario).get().getData();
+            LocalDate dataFim = transacaoRepository.buscarUltimaTransacao(idUsuario).get().getData();
 
-        for (TipoTransacao tipo : TipoTransacao.values()) {
-            quantidadePorTipo.put(tipo, 0);
-            valoresPorTipo.put(tipo, BigDecimal.ZERO);
+            periodo.put("inicio", dataInicio);
+            periodo.put("fim", dataFim);
         }
+        return periodo;
+    }
 
-        for (Transacao transacao : transacaos) {
+    private Map<TipoTransacao, Integer> inicializarMapaDeQuantidade() {
+        Map<TipoTransacao, Integer> mapa = new EnumMap<>(TipoTransacao.class);
+        for (TipoTransacao tipo : TipoTransacao.values()) {
+            mapa.put(tipo, 0);
+        }
+        return mapa;
+    }
+
+    private Map<TipoTransacao, BigDecimal> inicializarMapaDeValores() {
+        Map<TipoTransacao, BigDecimal> mapa = new EnumMap<>(TipoTransacao.class);
+        for (TipoTransacao tipo : TipoTransacao.values()) {
+            mapa.put(tipo, BigDecimal.ZERO);
+        }
+        return mapa;
+    }
+
+    private BigDecimal calcularResumo( List<Transacao> transacoes,
+            Map<TipoTransacao, Integer> quantidadePorTipo,
+            Map<TipoTransacao, BigDecimal> valoresPorTipo
+    ) {
+        BigDecimal saldo = BigDecimal.ZERO;
+
+        for (Transacao transacao : transacoes) {
             TipoTransacao tipo = transacao.getTipo();
             BigDecimal valor = transacao.getValor();
 
-            saldoAtual = saldoAtual.add(valor);
-
+            saldo = saldo.add(valor);
             quantidadePorTipo.put(tipo, quantidadePorTipo.get(tipo) + 1);
             valoresPorTipo.put(tipo, valoresPorTipo.get(tipo).add(valor));
         }
 
-        BigDecimal mediaPorTransacao = saldoAtual.divide(BigDecimal.valueOf(totalTransacoes), 2, RoundingMode.HALF_UP);
-
-    return new UsuarioResumoResponseDTO(
-            usuario.getId(),
-            usuario.getNome(),
-            periodo,
-            totalTransacoes,
-            quantidadePorTipo,
-            valoresPorTipo,
-            saldoAtual,
-            mediaPorTransacao,
-            dataFim
-    );
-  }
-
-
-
-
-
-
-
-
+        return saldo;
+    }
 }
