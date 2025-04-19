@@ -1,6 +1,7 @@
 package br.com.devgui.banktxtapi.controller;
 
 import br.com.devgui.banktxtapi.controller.request.UsuarioCadastroRequestDTO;
+import br.com.devgui.banktxtapi.controller.response.UsuarioResumoResponseDTO;
 import br.com.devgui.banktxtapi.controller.response.UsuarioTransacoesResponseDTO;
 import br.com.devgui.banktxtapi.model.Usuario;
 import br.com.devgui.banktxtapi.service.UsuarioService;
@@ -39,5 +40,11 @@ public class UsuarioController {
                                                                 @RequestParam("inicio") LocalDate dataInicial,
                                                                 @RequestParam("fim") LocalDate dataFinal){
         return usuarioService.listarTransacoesEntreDatas(id, dataInicial, dataFinal);
+    }
+
+    @GetMapping("/{id}/resumo")
+    @ResponseStatus(HttpStatus.OK)
+    public UsuarioResumoResponseDTO buscarResumo(@PathVariable Long id){
+        return usuarioService.obterResumo(id);
     }
 }
