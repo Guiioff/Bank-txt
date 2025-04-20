@@ -8,6 +8,7 @@ import br.com.devgui.banktxtapi.model.enums.TipoTransacao;
 import br.com.devgui.banktxtapi.repository.TransacaoRepository;
 import br.com.devgui.banktxtapi.repository.UsuarioRepository;
 import br.com.devgui.banktxtapi.service.TransacaoService;
+import br.com.devgui.banktxtapi.validator.TransacaoValidator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,9 +28,12 @@ public class TransacaoServiceImpl implements TransacaoService {
     private final TransacaoRepository transacaoRepository;
     private final UsuarioRepository usuarioRepository;
 
-    public TransacaoServiceImpl(TransacaoRepository transacaoRepository, UsuarioRepository usuarioRepository) {
+    private final TransacaoValidator transacaoValidator;
+
+    public TransacaoServiceImpl(TransacaoRepository transacaoRepository, UsuarioRepository usuarioRepository, TransacaoValidator transacaoValidator) {
         this.transacaoRepository = transacaoRepository;
         this.usuarioRepository = usuarioRepository;
+        this.transacaoValidator = transacaoValidator;
     }
 
     @Override
@@ -100,24 +104,7 @@ public class TransacaoServiceImpl implements TransacaoService {
 
     @Override
     public void salvarTransacoes(List<Transacao> transacoes) {
-
-        List<Transacao> transacoesValidas = new ArrayList<>();
-
-        for (Transacao transacao : transacoes) {
-            if (transacao == null) {
-                throw new IllegalArgumentException("Transação nula encontrada.");
-            }
-
-            if (transacao.getValor() == null || transacao.getValor().compareTo(BigDecimal.ZERO) == 0 ) {
-                throw new IllegalArgumentException("Valor da transação não pode ser nulo/zero.");
-            }
-
-            if (transacao.getData() == null) {
-                throw new IllegalArgumentException("Data da transação não pode ser nula.");
-            }
-
-            transacoesValidas.add(transacao);
-        }
-        this.transacaoRepository.saveAll(transacoesValidas);
+        transacaoValidator.validar(transacoes);
+        this.transacaoRepository.saveAll(transacoes);
     }
 }
