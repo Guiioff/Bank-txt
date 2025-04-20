@@ -3,13 +3,16 @@ package br.com.devgui.banktxtapi.service.impl;
 import br.com.devgui.banktxtapi.controller.response.TransacaoResponseDTO;
 import br.com.devgui.banktxtapi.controller.response.UsuarioResumoResponseDTO;
 import br.com.devgui.banktxtapi.controller.response.UsuarioTransacoesResponseDTO;
+import br.com.devgui.banktxtapi.exception.UsuarioNaoEncontradoException;
 import br.com.devgui.banktxtapi.model.Transacao;
 import br.com.devgui.banktxtapi.model.Usuario;
 import br.com.devgui.banktxtapi.model.enums.TipoTransacao;
 import br.com.devgui.banktxtapi.repository.TransacaoRepository;
 import br.com.devgui.banktxtapi.repository.UsuarioRepository;
 import br.com.devgui.banktxtapi.service.UsuarioService;
-import jakarta.persistence.EntityNotFoundException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -17,8 +20,6 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class UsuarioServiceImpl implements UsuarioService {
@@ -40,7 +41,7 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Override
     public UsuarioTransacoesResponseDTO listarTransacoes(Long idUsuario) {
         Usuario usuario = usuarioRepository.findById(idUsuario)
-                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com o ID: " + idUsuario));
+                .orElseThrow(() -> new UsuarioNaoEncontradoException("Usuário não encontrado com o ID: " + idUsuario));
 
         List<TransacaoResponseDTO> transacaoResponseDTOS = transacaoRepository
                 .findByUsuarioId(usuario.getId())
@@ -57,7 +58,7 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Override
     public UsuarioTransacoesResponseDTO listarTransacoesEntreDatas(Long idUsuario, LocalDate dataInicial, LocalDate dataFinal) {
         Usuario usuario = usuarioRepository.findById(idUsuario)
-                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com o ID: " + idUsuario));
+                .orElseThrow(() -> new UsuarioNaoEncontradoException("Usuário não encontrado com o ID: " + idUsuario));
 
         List<Transacao> transacaos = transacaoRepository.buscarEntreDatas(usuario.getId(), dataInicial, dataFinal);
         List<TransacaoResponseDTO> transacaoResponseDTOS = transacaos.stream()
@@ -72,7 +73,7 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Override
     public UsuarioResumoResponseDTO obterResumo(Long idUsuario) {
         Usuario usuario = usuarioRepository.findById(idUsuario)
-                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com o ID: " + idUsuario));
+                .orElseThrow(() -> new UsuarioNaoEncontradoException("Usuário não encontrado com o ID: " + idUsuario));
 
         List<Transacao> transacoes = transacaoRepository.findByUsuarioId(usuario.getId());
 
