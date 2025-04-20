@@ -17,9 +17,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class TransacaoServiceImpl implements TransacaoService {
@@ -58,9 +58,26 @@ public class TransacaoServiceImpl implements TransacaoService {
                     throw new ArquivoInvalidoException("Linha " + linhaAtual + " está mal formatada: '" + linha + "'");
                 }
 
-                LocalDate data = LocalDate.parse(partes[0]);
-                TipoTransacao tipo = TipoTransacao.valueOf(partes[1]);
-                BigDecimal valor = new BigDecimal(partes[2]);
+                LocalDate data;
+                try {
+                    data = LocalDate.parse(partes[0]);
+                } catch (DateTimeParseException e) {
+                    throw new ArquivoInvalidoException("Linha " + linhaAtual + ": data inválida: '" + partes[0] + "'. Formato esperado: yyyy-MM-dd");
+                }
+
+                TipoTransacao tipo;
+                try {
+                    tipo = TipoTransacao.valueOf(partes[1]);
+                } catch (IllegalArgumentException e) {
+                    throw new ArquivoInvalidoException("Linha " + linhaAtual + ": tipo de transação inválido: '" + partes[1] + "'");
+                }
+
+                BigDecimal valor;
+                try {
+                    valor = new BigDecimal(partes[2]);
+                } catch (NumberFormatException e) {
+                    throw new ArquivoInvalidoException("Linha " + linhaAtual + ": valor inválido: '" + partes[2] + "'");
+                }
 
                 if (valor.compareTo(BigDecimal.ZERO) == 0) {
                     throw new ArquivoInvalidoException("Linha " + linhaAtual + ": transação com valor 0 é inválida.");
