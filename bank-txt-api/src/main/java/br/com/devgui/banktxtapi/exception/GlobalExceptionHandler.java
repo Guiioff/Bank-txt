@@ -26,4 +26,13 @@ public class GlobalExceptionHandler {
                 ex.getMessage());
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(TransacaoInvalidaException.class)
+    public ResponseEntity<ErrorResponseDTO> transacaoInvalidaException(TransacaoInvalidaException ex) {
+        ErrorResponseDTO error = new ErrorResponseDTO(
+                HttpStatus.BAD_REQUEST.value(),
+                "Transação inválida",
+                ex.getMessage());
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
 }
