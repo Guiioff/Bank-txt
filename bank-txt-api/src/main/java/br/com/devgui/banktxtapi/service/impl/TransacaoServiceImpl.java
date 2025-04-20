@@ -1,5 +1,6 @@
 package br.com.devgui.banktxtapi.service.impl;
 
+import br.com.devgui.banktxtapi.exception.UsuarioNaoEncontradoException;
 import br.com.devgui.banktxtapi.model.Transacao;
 import br.com.devgui.banktxtapi.model.Usuario;
 import br.com.devgui.banktxtapi.model.enums.TipoTransacao;
@@ -32,11 +33,9 @@ public class TransacaoServiceImpl implements TransacaoService {
     @Override
     @Transactional
     public void processarTransacoes(MultipartFile arquivo, Long usuarioId) {
-        Optional<Usuario> usuarioOptional = usuarioRepository.findById(usuarioId);
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new UsuarioNaoEncontradoException("Usuário não encontrado com o ID: " + usuarioId));
 
-        if (usuarioOptional.isEmpty()) throw new RuntimeException("Usuário não encontrado");
-
-        Usuario usuario = usuarioOptional.get();
         List<Transacao> transacaos = this.lerArquivo(arquivo, usuario);
         this.salvarTransacoes(transacaos);
     }
