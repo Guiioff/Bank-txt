@@ -1,7 +1,6 @@
 package br.com.devgui.banktxtapi.repository;
 
 import br.com.devgui.banktxtapi.model.Transacao;
-import org.springframework.cglib.core.Local;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
