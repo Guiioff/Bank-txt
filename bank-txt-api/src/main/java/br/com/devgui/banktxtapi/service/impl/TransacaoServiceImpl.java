@@ -1,5 +1,6 @@
 package br.com.devgui.banktxtapi.service.impl;
 
+import br.com.devgui.banktxtapi.exception.ArquivoInvalidoException;
 import br.com.devgui.banktxtapi.exception.UsuarioNaoEncontradoException;
 import br.com.devgui.banktxtapi.model.Transacao;
 import br.com.devgui.banktxtapi.model.Usuario;
@@ -12,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -45,21 +47,37 @@ public class TransacaoServiceImpl implements TransacaoService {
         List<Transacao> transacoes = new ArrayList<>();
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(arquivo.getInputStream()));
+
             String linha;
+            int linhaAtual = 1;
 
             while ((linha = reader.readLine()) != null) {
                 String[] partes = linha.split(";");
+
+                if (partes.length != 3) {
+                    throw new ArquivoInvalidoException("Linha " + linhaAtual + " está mal formatada: '" + linha + "'");
+                }
 
                 LocalDate data = LocalDate.parse(partes[0]);
                 TipoTransacao tipo = TipoTransacao.valueOf(partes[1]);
                 BigDecimal valor = new BigDecimal(partes[2]);
 
+                if (valor.compareTo(BigDecimal.ZERO) == 0) {
+                    throw new ArquivoInvalidoException("Linha " + linhaAtual + ": transação com valor 0 é inválida.");
+                }
+
                 transacoes.add(new Transacao(data, valor, tipo, usuario));
+                linhaAtual++;
             }
+
+            if (transacoes.isEmpty()) {
+                throw new ArquivoInvalidoException("O arquivo não contém transações válidas.");
+            }
+
             return transacoes;
 
-        } catch (Exception e) {
-            throw new RuntimeException("Erro ao processar o arquivo", e);
+        } catch (IOException e) {
+            throw new ArquivoInvalidoException("Erro ao ler o arquivo: " + e.getMessage());
         }
     }
 

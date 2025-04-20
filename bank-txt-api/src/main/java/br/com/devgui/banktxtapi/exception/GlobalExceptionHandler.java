@@ -17,4 +17,13 @@ public class GlobalExceptionHandler {
                 ex.getMessage());
         return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
+
+    @ExceptionHandler(ArquivoInvalidoException.class)
+    public ResponseEntity<ErrorResponseDTO> arquivoInvalidoException(ArquivoInvalidoException ex) {
+        ErrorResponseDTO error = new ErrorResponseDTO(
+                HttpStatus.BAD_REQUEST.value(),
+                "Arquivo inválido",
+                ex.getMessage());
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
 }
