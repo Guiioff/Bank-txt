@@ -9,8 +9,8 @@ import br.com.devgui.banktxtapi.repository.TransacaoRepository;
 import br.com.devgui.banktxtapi.repository.UsuarioRepository;
 import br.com.devgui.banktxtapi.service.TransacaoService;
 import br.com.devgui.banktxtapi.validator.TransacaoValidator;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
@@ -27,10 +27,11 @@ public class TransacaoServiceImpl implements TransacaoService {
 
     private final TransacaoRepository transacaoRepository;
     private final UsuarioRepository usuarioRepository;
-
     private final TransacaoValidator transacaoValidator;
 
-    public TransacaoServiceImpl(TransacaoRepository transacaoRepository, UsuarioRepository usuarioRepository, TransacaoValidator transacaoValidator) {
+    public TransacaoServiceImpl(TransacaoRepository transacaoRepository,
+                                UsuarioRepository usuarioRepository,
+                                TransacaoValidator transacaoValidator) {
         this.transacaoRepository = transacaoRepository;
         this.usuarioRepository = usuarioRepository;
         this.transacaoValidator = transacaoValidator;
@@ -39,55 +40,27 @@ public class TransacaoServiceImpl implements TransacaoService {
     @Override
     @Transactional
     public void processarTransacoes(MultipartFile arquivo, Long usuarioId) {
-        Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new UsuarioNaoEncontradoException("Usuário não encontrado com o ID: " + usuarioId));
+        Usuario usuario = buscarUsuarioOuLancar(usuarioId);
+        List<Transacao> transacoes = lerArquivo(arquivo, usuario);
+        salvarTransacoes(transacoes);
+    }
 
-        List<Transacao> transacaos = this.lerArquivo(arquivo, usuario);
-        this.salvarTransacoes(transacaos);
+    private Usuario buscarUsuarioOuLancar(Long usuarioId) {
+        return usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new UsuarioNaoEncontradoException("Usuário não encontrado com o ID: " + usuarioId));
     }
 
     @Override
     public List<Transacao> lerArquivo(MultipartFile arquivo, Usuario usuario) {
         List<Transacao> transacoes = new ArrayList<>();
-        try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(arquivo.getInputStream()));
 
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(arquivo.getInputStream()))) {
             String linha;
             int linhaAtual = 1;
 
             while ((linha = reader.readLine()) != null) {
-                String[] partes = linha.split(";");
-
-                if (partes.length != 3) {
-                    throw new ArquivoInvalidoException("Linha " + linhaAtual + " está mal formatada: '" + linha + "'");
-                }
-
-                LocalDate data;
-                try {
-                    data = LocalDate.parse(partes[0]);
-                } catch (DateTimeParseException e) {
-                    throw new ArquivoInvalidoException("Linha " + linhaAtual + ": data inválida: '" + partes[0] + "'. Formato esperado: yyyy-MM-dd");
-                }
-
-                TipoTransacao tipo;
-                try {
-                    tipo = TipoTransacao.valueOf(partes[1]);
-                } catch (IllegalArgumentException e) {
-                    throw new ArquivoInvalidoException("Linha " + linhaAtual + ": tipo de transação inválido: '" + partes[1] + "'");
-                }
-
-                BigDecimal valor;
-                try {
-                    valor = new BigDecimal(partes[2]);
-                } catch (NumberFormatException e) {
-                    throw new ArquivoInvalidoException("Linha " + linhaAtual + ": valor inválido: '" + partes[2] + "'");
-                }
-
-                if (valor.compareTo(BigDecimal.ZERO) == 0) {
-                    throw new ArquivoInvalidoException("Linha " + linhaAtual + ": transação com valor 0 é inválida.");
-                }
-
-                transacoes.add(new Transacao(data, valor, tipo, usuario));
+                Transacao transacao = converterLinhaParaTransacao(linha, linhaAtual, usuario);
+                transacoes.add(transacao);
                 linhaAtual++;
             }
 
@@ -102,9 +75,51 @@ public class TransacaoServiceImpl implements TransacaoService {
         }
     }
 
+    private Transacao converterLinhaParaTransacao(String linha, int linhaAtual, Usuario usuario) {
+        String[] partes = linha.split(";");
+
+        if (partes.length != 3) {
+            throw new ArquivoInvalidoException("Linha " + linhaAtual + " está mal formatada: '" + linha + "'");
+        }
+
+        LocalDate data = parseData(partes[0], linhaAtual);
+        TipoTransacao tipo = parseTipoTransacao(partes[1], linhaAtual);
+        BigDecimal valor = parseValor(partes[2], linhaAtual);
+
+        if (valor.compareTo(BigDecimal.ZERO) == 0) {
+            throw new ArquivoInvalidoException("Linha " + linhaAtual + ": transação com valor 0 é inválida.");
+        }
+
+        return new Transacao(data, valor, tipo, usuario);
+    }
+
+    private LocalDate parseData(String dataStr, int linhaAtual) {
+        try {
+            return LocalDate.parse(dataStr);
+        } catch (DateTimeParseException e) {
+            throw new ArquivoInvalidoException("Linha " + linhaAtual + ": data inválida: '" + dataStr + "'. Formato esperado: yyyy-MM-dd");
+        }
+    }
+
+    private TipoTransacao parseTipoTransacao(String tipoStr, int linhaAtual) {
+        try {
+            return TipoTransacao.valueOf(tipoStr);
+        } catch (IllegalArgumentException e) {
+            throw new ArquivoInvalidoException("Linha " + linhaAtual + ": tipo de transação inválido: '" + tipoStr + "'");
+        }
+    }
+
+    private BigDecimal parseValor(String valorStr, int linhaAtual) {
+        try {
+            return new BigDecimal(valorStr);
+        } catch (NumberFormatException e) {
+            throw new ArquivoInvalidoException("Linha " + linhaAtual + ": valor inválido: '" + valorStr + "'");
+        }
+    }
+
     @Override
     public void salvarTransacoes(List<Transacao> transacoes) {
         transacaoValidator.validar(transacoes);
-        this.transacaoRepository.saveAll(transacoes);
+        transacaoRepository.saveAll(transacoes);
     }
 }
