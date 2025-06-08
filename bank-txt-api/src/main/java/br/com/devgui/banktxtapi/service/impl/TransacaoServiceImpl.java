@@ -9,6 +9,8 @@ import br.com.devgui.banktxtapi.repository.TransacaoRepository;
 import br.com.devgui.banktxtapi.repository.UsuarioRepository;
 import br.com.devgui.banktxtapi.service.TransacaoService;
 import br.com.devgui.banktxtapi.validator.TransacaoValidator;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -36,6 +38,11 @@ public class TransacaoServiceImpl implements TransacaoService {
         this.usuarioRepository = usuarioRepository;
         this.transacaoValidator = transacaoValidator;
     }
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    private static final int BATCH_SIZE = 100;
 
     @Override
     @Transactional
@@ -120,6 +127,15 @@ public class TransacaoServiceImpl implements TransacaoService {
     @Override
     public void salvarTransacoes(List<Transacao> transacoes) {
         transacaoValidator.validar(transacoes);
-        transacaoRepository.saveAll(transacoes);
+        for (int i = 0; i < transacoes.size(); i++) {
+            entityManager.persist(transacoes.get(i));
+
+            if (i % BATCH_SIZE == 0 && i > 0) {
+                entityManager.flush();
+                entityManager.clear();
+            }
+        }
+        entityManager.flush();
+        entityManager.clear();
     }
 }
